@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# chkconfig:   2345 95 95
+# description:
+
+### BEGIN INIT INFO
+# Provides:       {{ item.executable }}
+# Required-Start: $network
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop:  0 1 6
+# Short-Description: start and stop {{ item.executable }}
+# Description:
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog="{{ item.executable }}"
+exec="/usr/local/bin/$prog"
+pidfile="/var/run/$prog.pid"
+lockfile="/var/lock/subsys/$prog"
+logfile="/var/log/$prog"
+
+[ -e /etc/kubernetes/config ] && . /etc/kubernetes/config
+[ -e /etc/kubernetes/{{ item.config }} ] && . /etc/kubernetes/{{ item.config }}
+
+start() {
+    [ -x $exec ] || exit 5
+
+    echo -n $"Starting $prog: "
+
+    if ! [ -f $pidfile ]; then
+        echo -n $"Starting $prog: "
+        $exec $DAEMON_ARGS &
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && touch $lockfile
+        [ $RETVAL -eq 0 ] && success || failure
+        echo
+        return $RETVAL
+    else
+        failure
+        echo
+        printf "$pidfile still exists...\n"
+        exit 7
+    fi
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc -p $pidfile -d 300 $prog
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    status -p $pidfile $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    status)
+        rh_status
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+
+exit $?

@@ -1,20 +1,16 @@
 ---
-- include: fedora.yml
-  when: is_rhel7.rc != 0
+- name: Install docker
+  yum: name=docker-io state=present
 
-- include: rhel7.yml
-  when: is_rhel7.rc == 0
+- name: Start docker
+  service: name=docker state=started
 
-- name: Write etcd global config file
-  template: src=etcd.conf.j2 dest=/etc/etcd/etcd.conf
-  notify:
-        - restart etcd
+- name: Check if etcd is started
+  shell: docker inspect etcd &>/dev/null
+  ignore_errors: True
+  changed_when: False
+  register: docker_inspect_etcd
 
-- name: Enable etcd
-  service: name=etcd enabled=yes state=started
-
-- include: firewalld.yml
-  when: has_firewalld.rc == 0
-
-- include: iptables.yml
-  when: has_firewalld.rc != 0 and has_iptables.rc == 0
+- name: Start etcd container
+  command: docker run -d --name etcd -p 4001:4001 coreos/etcd
+  when: docker_inspect_etcd|failed

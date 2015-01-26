@@ -1,8 +1,18 @@
 ---
-- name: Create kubernetes bridge interface
-  command: nmcli connection add type bridge ifname kbr0 con-name kubernetes-bridge ip4 {{ kube_ip_addr }}/24
-  args:
-        creates: /etc/sysconfig/network-scripts/ifcfg-kubernetes-bridge
-
+- name: Check if bridge exists
+  shell: ifconfig kbr0 &>/dev/null
+  register: ifconfig_kbr0
+  ignore_errors: True
+  changed_when: False
+- name: Create kubernetes bridge
+  command: brctl addbr kbr0
+  when: ifconfig_kbr0|failed
+- name: Enable stp on kubernetes bridge
+  command: brctl stp kbr0 on
+  when: ifconfig_kbr0|failed
+- name: Set IP address on kubernetes bridge
+  command: ifconfig kbr0 {{ kube_ip_addr }}/24
+- name: Create ifcfg-kbr0 script
+  template: src=ifcfg-kbr0.j2 dest=/etc/sysconfig/network-scripts/ifcfg-kbr0
 - name: Configure docker to use the bridge inferface
-  copy: src=docker dest=/etc/sysconfig/docker
+  template: src=docker.j2 dest=/etc/sysconfig/docker

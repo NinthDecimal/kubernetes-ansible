@@ -10,5 +10,10 @@ KUBELET_PORT="--port=10250"
 # You may leave this blank to use the actual hostname
 KUBELET_HOSTNAME="--hostname_override={{ inventory_hostname }}"
 
+# Comma seperated list of nodes in the etcd cluster
+KUBE_ETCD_SERVERS="--etcd_servers=http://{{ groups['etcd'][0] }}:4001"
+
 # Add your own!
-KUBELET_ARGS="--api_servers=\"{{ groups['masters'][0] }}:8080\""
+KUBELET_ARGS="--api_servers=http://{{ groups['masters'][0] }}:8080 --auth_path=/etc/kubernetes/kubernetes_auth"
+
+OPTIONS="$KUBELET_ADDRESS $KUBELET_PORT $KUBELET_HOSTNAME $KUBE_ETCD_SERVERS $KUBELET_ARGS"

@@ -1,11 +1,20 @@
 ---
-- include: fedora.yml
-  when: is_rhel7.rc != 0
+- name: Create temp dir
+  command: mktemp -d
+  register: mktemp
 
-- include: rhel7.yml
-  when: is_rhel7.rc == 0
+- name: Copy kubernetes RPM
+  copy: src=ndml-kubernetes-0.8.2-2.el6.x86_64.rpm dest={{mktemp.stdout}}
 
-- name: write the global config file
+- name: Install kubernetes
+  yum: name={{mktemp.stdout}}/ndml-kubernetes-0.8.2-2.el6.x86_64.rpm state=present
+
+- name: Copy kubernetes auth file
+  copy: src=kubernetes_auth dest=/etc/kubernetes/kubernetes_auth
+  notify:
+    - restart daemons
+
+- name: Write the global config file
   template: src=config.j2 dest=/etc/kubernetes/config
   notify:
-          - restart daemons
+    - restart daemons

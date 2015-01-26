@@ -2,8 +2,8 @@
 - name: restart daemons
   command: /bin/true
   notify:
-          - restart kubelet
-          - restart proxy
+    - restart kubelet
+    - restart proxy
 
 - name: restart cadvisor
   service: name=cadvisor state=restarted
@@ -19,7 +19,3 @@
 
 - name: restart docker
   service: name=docker state=restarted
-
-# OK, so it really reboots, sue me
-- name: restart network
-  command: shutdown -r now

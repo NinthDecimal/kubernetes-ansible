@@ -6,10 +6,10 @@
 - name: Set up a network config file
   template: src=ifcfg-dev.j2 dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
   notify:
-          - apply changes
+    - apply changes
   when: ifcfg.stat.exists == False
 
 - name: Set up a static routing table
   template: src=routing_table.j2 dest=/etc/sysconfig/network-scripts/route-{{ ansible_default_ipv4.interface }}
   notify:
-          - apply changes
+    - apply changes

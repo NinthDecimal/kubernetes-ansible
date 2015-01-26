@@ -1,6 +1,9 @@
 ---
-- name: restart etcd
-  service: name=etcd state=restarted
+- name: restart daemons
+  command: /bin/true
 
 - name: restart iptables
   service: name=iptables state=restarted
+
+- name: restart docker
+  service: name=docker state=restarted
